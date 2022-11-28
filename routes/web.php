@@ -13,17 +13,15 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
-});
-
+$router->get('/',['as' => 'index','uses' => 'IndexController@index']);
 
 $router->group(['prefix' => 'root-system'], function () use ($router) {
 	
     $router->get('/version', function () use ($router) {
         return $router->app->version();
     });
-    $router->get('/generate-pdf',['as' => 'indexpdf','uses' => 'RootSystemController@pdf']);
+    $router->get('/generate-pdf',['as' => 'indexpdf','uses' => 'RootSystemController@generatePdf']);
+    $router->get('/pdf-encode',['as' => 'indexpdfEncode','uses' => 'RootSystemController@pdfencode']);
     
 
 });

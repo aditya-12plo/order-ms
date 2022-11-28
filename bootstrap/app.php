@@ -25,7 +25,12 @@ $app = new Laravel\Lumen\Application(
 
 // $app->withFacades();
 
-// $app->withEloquent();
+$app->instance('path.config', app()->basePath() . DIRECTORY_SEPARATOR . 'config');
+$app->instance('path.storage', app()->basePath() . DIRECTORY_SEPARATOR . 'storage');
+$app->withFacades(true, [
+    'Illuminate\Support\Facades\Mail' => 'Mail',
+]);
+$app->withEloquent();
 
 /*
 |--------------------------------------------------------------------------
@@ -60,6 +65,17 @@ $app->singleton(
 */
 
 $app->configure('app');
+$app->configure('dompdf');
+$app->configure('services');
+$app->configure('mail');
+$app->alias('mailer', Illuminate\Mail\Mailer::class);
+$app->alias('mailer', Illuminate\Contracts\Mail\Mailer::class);
+$app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
+
+$app->register(\Barryvdh\DomPDF\ServiceProvider::class);
+class_alias('Barryvdh\DomPDF\Facade\Pdf', 'PDF');
+
+class_alias('Illuminate\Support\Facades\App', 'App');
 
 /*
 |--------------------------------------------------------------------------
@@ -71,14 +87,15 @@ $app->configure('app');
 | route or middleware that'll be assigned to some specific routes.
 |
 */
-
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
-
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+$app->middleware([
+    App\Http\Middleware\ResponseMiddleware::class
+]);
+$app->middleware([
+    App\Http\Middleware\CorsMiddleware::class
+]);
+$app->routeMiddleware([
+    'lang.auth' => App\Http\Middleware\LangMiddleware::class,
+]);
 
 /*
 |--------------------------------------------------------------------------
@@ -91,9 +108,19 @@ $app->configure('app');
 |
 */
 
-// $app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\AppServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
-// $app->register(App\Providers\EventServiceProvider::class);
+$app->register(App\Providers\EventServiceProvider::class);
+$app->register(\Illuminate\Auth\Passwords\PasswordResetServiceProvider::class);
+$app->register(\Illuminate\Mail\MailServiceProvider::class);
+
+/*
+|--------------------------------------------------------------------------
+| Load The Langauage
+|--------------------------------------------------------------------------
+*/
+
+app('translator')->setLocale(env('APP_LOCALE', 'id'));
 
 /*
 |--------------------------------------------------------------------------
