@@ -21,8 +21,23 @@ $router->group([
     $router->group(['prefix' => 'auth'], function () use ($router) {
         
         $router->post('/password/email',['as' => 'userResetPassword','uses' => 'AuthController@resetPassword']);        
+        $router->post('/login',['as' => 'userLogin','uses' => 'AuthController@authenticate']);        
     
     });
 
+
+    $router->group(
+        ['middleware' => 'jwt.auth'], 
+        function() use ($router) {
+
+            $router->group(['prefix' => 'user'], function () use ($router) {
+	
+                $router->get('/permission-role',['as' => 'roleUser','uses' => 'UserController@roleUser']);
+                $router->get('/access/detail',['as' => 'detailUserAccess','uses' => 'UserController@detailUserAccess']);
+                
+            });
+
+
+    });
 
 });

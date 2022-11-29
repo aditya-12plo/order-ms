@@ -51,4 +51,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     	return $this->belongsTo('App\Models\Company','id_company','id_company');
     }
 
+    public function role()
+    {
+    	return $this->hasOne('App\Models\Role','id_role','id_role');
+    }
 }

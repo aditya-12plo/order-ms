@@ -3,6 +3,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Exception;
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
 
 use App\Models\User;
@@ -30,7 +31,7 @@ class JwtMiddleware
 				->setStatusCode(401);
         }
         try {
-            $credentials = JWT::decode($token, env('APP_KEY'), ['HS256']);
+            $credentials = JWT::decode($token,  new Key(env('APP_KEY'), 'HS256'));
         } catch(ExpiredException $e) {
 			
 			if($e->getMessage() == "Expired token"){
@@ -159,7 +160,7 @@ class JwtMiddleware
 			'exp' => time() + (1440*60*7)
 		];
 		
-		return JWT::encode($payload, env('JWT_SECRET'));
+		return JWT::encode($payload, env('JWT_SECRET'), 'HS256');
 	}
 
 }

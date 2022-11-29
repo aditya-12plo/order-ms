@@ -90,5 +90,71 @@ class AuthController extends Controller
   
     }
 
+    
+    public function authenticate(Request $request) {
+
+        $validator = Validator::make($request->all(), [
+           'email' 		    => 'required|email',
+           'company_code' 	=> 'required|max:255',
+           'password' 		=> 'required'
+       ]);
+       if ($validator->fails()) {
+           return response()
+           ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+           ->withHeaders([
+             'Content-Type'          => 'application/json',
+             ])
+               ->setStatusCode(422);  
+       }
+       
+
+       $email 		= $request->input('email');
+       $password 	= $request->input('password');
+       $company_code = $request->input('company_code');
+       
+       
+       $selectedUser = User::where([['email', '=', $email],["password", "=" , sha1($request->password)],['status', '=', "ACTIVATE"]])->with(['company_detail','role'])->whereHas('company_detail',function($q) use ($company_code){
+           return $q->where([["code",$company_code],["status","ACTIVATE"]]);
+         })->first();
+       
+       if ($selectedUser) {
+         
+           $token = $this->jwt($selectedUser);
+           
+           $data = ['access_token' => $token, 'refresh_token' => $selectedUser->remember_token, 'type' => 'bearer','exp' => time() + 1440*60];
+           return response()
+               ->json(['status'=>200 ,'datas' => $data, 'errors' => null])
+               ->withHeaders([
+                 'Content-Type'          => 'application/json',
+                 ])
+                   ->setStatusCode(200);
+
+       } else {
+           $message = trans("translate.userLoginFail");
+
+           return response()
+           ->json(['status'=>422 ,'datas' => null, 'errors' => ['message' => [$message]]])
+           ->withHeaders([
+             'Content-Type'          => 'application/json',
+             ])
+               ->setStatusCode(422);
+
+       }
+
+    }
+
+    private function jwt(User $user) {
+        
+        $payload = [
+            'iss' => "bearer",
+            'sub' => $user,
+            'iat' => time(),
+            'exp' => time() + 1440*60 // token kadaluwarsa setelah 3600 detik
+        ];
+        
+        return JWT::encode($payload, env('APP_KEY'), 'HS256');
+    
+    }
+
 
 }
