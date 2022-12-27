@@ -37,7 +37,7 @@ class JwtMiddleware
 			if($e->getMessage() == "Expired token"){
 				
 				if($refreshToken){
-					$getUser	= User::with(['company','role'])->where([["remember_token",$refreshToken],["status","ACTIVATE"]])->first();
+					$getUser	= User::with(['company_detail','role'])->where([["remember_token",$refreshToken],["status","ACTIVATE"]])->first();
 					
 					if($getUser){
 
@@ -154,13 +154,13 @@ class JwtMiddleware
 		]);
  
 		$payload = [
-			'iss' => "token",
+			'iss' => "bearer",
 			'sub' => $user,
 			'iat' => time(),
-			'exp' => time() + (1440*60*7)
+			'exp' => time() + 1440*60 // token kadaluwarsa setelah 3600 detik
 		];
 		
-		return JWT::encode($payload, env('JWT_SECRET'), 'HS256');
+		return JWT::encode($payload, env('APP_KEY'), 'HS256');
 	}
 
 }

@@ -13,6 +13,9 @@ use Firebase\JWT\JWT;
 use App\Mail\EmailNotification;
  
 use App\Models\Bot\Telegram;
+use App\Models\Log;
+use App\Models\Company;
+use App\Models\Backup;
 
 
 class AdditionalController extends Controller {
@@ -22,6 +25,53 @@ class AdditionalController extends Controller {
     {
 
     }
+
+    public static function insertLog($instance,$channel,$level=200 , $url="api" , $message="api" , $context="api" , $extra="api"){
+        $insert = [
+            'instance'    => $instance,
+            'channel'     => $channel,
+            'message'     => $message,
+            'level'       => $level,
+            'context'     => $context,
+            'url'         => $url,
+            'extra'       => $extra,
+            'ip'          => app('request')->server('REMOTE_ADDR'),
+            'user_agent'  => app('request')->server('HTTP_USER_AGENT')
+        ];
+        Log::create($insert);
+        
+    }
+
+
+    public static function groupCompanyDetail($id_company,$datas){
+        
+        foreach($datas as $data){
+           if($data->id_company == $id_company){
+                return $data->company_detail;
+           }
+        }
+
+        return false;
+    }
+
+
+    public static function groupCompany($id_company,$datas){
+        $arrays = [$id_company];
+        foreach($datas as $data){
+            array_push($arrays,$data->id_company);
+        }
+        return $arrays;
+    }
+
+    public static function getAllCompanyIds(){
+        $arrays = [];
+        $datas  = Company::get();
+        foreach($datas as $data){
+            array_push($arrays,$data->id_company);
+        }
+        return $arrays;
+    }
+
 
     public static function sendEmail($emails=[],$subject,$content,$attachment=array()){
         try {
@@ -52,21 +102,23 @@ class AdditionalController extends Controller {
         
     }
     
-    public static function checkPermission($request, $controllerName , $rolePermissionMethod){
-        $permision_roles     = $request->auth->permision_role;
+    public static function checkPermission($permision_roles, $controllerName , $rolePermissionMethod){
+        
+        if($permision_roles){
 
-        if(count($permision_roles) > 0){
+            if(count($permision_roles) > 0){
 
-            foreach($permision_roles as $key => $permision){
-                
-                if($permision->permission->controller == $controllerName){
+                foreach($permision_roles as $permision){
                     
-                    return $permision->$rolePermissionMethod;
-
+                    if($permision->code == $controllerName){
+                        
+                        return $permision->$rolePermissionMethod;
+    
+                    }
+    
                 }
-
+    
             }
-
         }
         
         return false;
@@ -96,6 +148,16 @@ class AdditionalController extends Controller {
 
         // $output  = base64_decode(gzuncompress($input));
         // return $output;
+    }
+
+
+    public static function cleanString($string) {
+        return strtoupper(preg_replace('/[^A-Za-z0-9\-]/', '', $string)); // Removes special chars.
+    }
+
+    public static function cleanStringWithoutSpace($string) {
+        $string = str_replace(' ', '', $string);
+        return strtoupper(preg_replace('/[^A-Za-z0-9\-]/', '', $string)); // Removes special chars.
     }
 
 }

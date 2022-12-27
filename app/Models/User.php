@@ -55,4 +55,14 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     {
     	return $this->hasOne('App\Models\Role','id_role','id_role');
     }
+
+    public function user_create()
+    {
+		  return $this->belongsTo('App\Models\User','create_by','id_user');        
+    }
+   
+    public function user_update()
+    {
+		  return $this->belongsTo('App\Models\User','update_by','id_user');        
+    }
 }
