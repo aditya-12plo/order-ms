@@ -24,7 +24,7 @@ class AuthController extends Controller
     }
     
 
-    public function resetPassword(Request $request){ 
+    public function forgotPassword(Request $request){ 
        
         $validator = Validator::make($request->all(), [
             'email'         => 'required|max:255|email', 
@@ -55,7 +55,7 @@ class AuthController extends Controller
                   ),
               ];
               
-              $link       =  env('APP_FRONTEND_URL')."reset-password/{$check->email}/{$check->remember_token}";
+              $link       =  env('APP_FRONTEND_URL')."reset-password/{$check->remember_token}";
   
               Mail::to($emails)->send(new ForgotPasswordNotification($subject,$check,$link));
   
@@ -90,7 +90,57 @@ class AuthController extends Controller
   
     }
 
-    
+    public function resetPassword(Request $request , $token)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|max:255',
+            'password'      => 'required',
+            'company_id'    => 'required|without_spaces|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+        $check  = User::where([["email",$request->email],["token",$token],["status","active"]])->first();
+        if($check){
+            
+            
+            User::where("user_id",$check->user_id)->update([
+                "password"      => sha1($request->password),
+                "token"         => Uuid::uuid1(),
+                "updated_at"    => date("Y-m-d H:i:s")
+            ]);
+
+            $message = trans("translate.successfullySend");
+            return response()
+            ->json(['status'=>200 ,'datas' =>["messages" => $message], 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(200);
+
+        }else{
+            $message = trans("translate.emailDoesNotExist");
+      
+            $errors = [
+                "email"   => [$message]
+            ];
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+
+        }
+    }
+
     public function authenticate(Request $request) {
 
         $validator = Validator::make($request->all(), [

@@ -20,7 +20,8 @@ $router->group([
 
     $router->group(['prefix' => 'auth'], function () use ($router) {
         
-        $router->post('/password/email',['as' => 'userResetPassword','uses' => 'AuthController@resetPassword']);        
+        $router->post('/password/email',['as' => 'userforgotPassword','uses' => 'AuthController@forgotPassword']);        
+        $router->post('/password/reset/{token}',['as' => 'userforgotPassword','uses' => 'AuthController@forgotPassword']);        
         $router->post('/login',['as' => 'userLogin','uses' => 'AuthController@authenticate']);        
     
     });
